@@ -1,11 +1,13 @@
 #ifndef PAPEL_H
 #define PAPEL_H
 
+#include <QGraphicsPixmapItem>
 
-class papel
+class Papel : public QGraphicsPixmapItem
 {
 public:
-    papel();
+    Papel();
+    void advance(int phase) override;
 };
 
 #endif // PAPEL_H
