@@ -1,11 +1,13 @@
 #ifndef TIJERA_H
 #define TIJERA_H
 
+#include <QGraphicsPixmapItem>
 
-class tijera
+class Tijera : public QGraphicsPixmapItem
 {
 public:
-    tijera();
+    Tijera();
+    void advance(int phase) override;
 };
 
 #endif // TIJERA_H
