@@ -1,11 +1,13 @@
 #ifndef PIEDRA_H
 #define PIEDRA_H
 
+#include <QGraphicsPixmapItem>
 
-class piedra
+class Piedra : public QGraphicsPixmapItem
 {
 public:
-    piedra();
+    Piedra();
+    void advance(int phase) override;
 };
 
 #endif // PIEDRA_H
