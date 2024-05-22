@@ -20,14 +20,22 @@ MainWindow::MainWindow(QWidget *parent)
     , isPlayerActive(false)
 {
     ui->setupUi(this);
-    scene = new QGraphicsScene(this);
+    scene = new QGraphicsScene(0, 0, 1000, 800, this);
     ui->graphicsView->setScene(scene);
+
+
     spawnTimer = new QTimer(this);
     moveTimer = new QTimer(this);
     countdownTimer = new QTimer(this);
     connect(spawnTimer, &QTimer::timeout, this, &MainWindow::spawnObjects);
     connect(moveTimer, &QTimer::timeout, this, &MainWindow::moveObjects);
     connect(countdownTimer, &QTimer::timeout, this, &MainWindow::updateCountdown);
+
+    QMessageBox::information(this, "Bienvenido al Juego",
+            "¡Bienvenido al juego de Piedra, Papel y Tijera!\n\n"
+            "Instrucciones:\n"
+            "- Haz clic en los botones 'Piedra', 'Tijera' o 'Papel' para agregarlos al juego y dale en 'Iniciar'.\n"
+        );
 }
 
 MainWindow::~MainWindow()
@@ -103,6 +111,13 @@ void MainWindow::on_addPlayerButton_clicked()
         ui->addScissorsButton->setEnabled(false);
         ui->addRockButton->setEnabled(false);
         ui->addPaperButton->setEnabled(false);
+
+        QMessageBox::information(this, "Mensaje", "Espera diez segundos para comenzar.");
+
+        QMessageBox::information(this, "Mensaje", "Utiliza las teclas W, A, S, D para moverte, y presiona la barra espaciadora para destruir los objetos.\n"
+                                 "- Tu objetivo es recolectar los objetos correspondientes antes de que se acabe el tiempo.\n"
+                                 "- ¡Diviértete y buena suerte!");
+
     }
 }
 
