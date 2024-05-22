@@ -3,8 +3,11 @@
 #include "papel.h"
 #include "piedra.h"
 #include "tijera.h"
+#include "jugador.h"
 #include <QGraphicsPixmapItem>
 #include <QMessageBox>
+#include <QtGlobal>
+#include <QRandomGenerator>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -36,6 +39,9 @@ void MainWindow::on_addScissorsButton_clicked()
 {
     if (scissorsCount < 5) {
         Tijera *scissors = new Tijera();
+        qreal xPos = QRandomGenerator::global()->bounded(2) == 0 ? 0 : scene->width() - scissors->boundingRect().width();
+        qreal yPos = QRandomGenerator::global()->bounded(scene->height());
+        scissors->setPos(xPos, yPos);
         scene->addItem(scissors);
         scissorsCount++;
     }
@@ -45,6 +51,9 @@ void MainWindow::on_addRockButton_clicked()
 {
     if (rockCount < 5) {
         Piedra *rock = new Piedra();
+        qreal xPos = QRandomGenerator::global()->bounded(scene->width());
+        qreal yPos = QRandomGenerator::global()->bounded(2) == 0 ? 0 : scene->height() - rock->boundingRect().height();
+        rock->setPos(xPos, yPos);
         scene->addItem(rock);
         rockCount++;
     }
@@ -54,6 +63,28 @@ void MainWindow::on_addPaperButton_clicked()
 {
     if (paperCount < 5) {
         Papel *paper = new Papel();
+        int corner = QRandomGenerator::global()->bounded(4);
+        qreal xPos = 0;
+        qreal yPos = 0;
+        switch(corner) {
+            case 0:
+                xPos = 0;
+                yPos = 0;
+                break;
+            case 1:
+                xPos = scene->width() - paper->boundingRect().width();
+                yPos = 0;
+                break;
+            case 2:
+                xPos = 0;
+                yPos = scene->height() - paper->boundingRect().height();
+                break;
+            case 3:
+                xPos = scene->width() - paper->boundingRect().width();
+                yPos = scene->height() - paper->boundingRect().height();
+                break;
+        }
+        paper->setPos(xPos, yPos);
         scene->addItem(paper);
         paperCount++;
     }
@@ -62,7 +93,7 @@ void MainWindow::on_addPaperButton_clicked()
 void MainWindow::on_addPlayerButton_clicked()
 {
     if (!isPlayerActive) {
-        playerIndicator = new QGraphicsPixmapItem(QPixmap("E:/Escritorio/Laboratorio/laboratorio5/StephanyTangarifePalacio-Laboratorio5/images/player.png"));
+        playerIndicator = new Jugador();
         playerIndicator->setPos(scene->width() / 2, scene->height() / 2);
         scene->addItem(playerIndicator);
         isPlayerActive = true;
@@ -96,8 +127,9 @@ void MainWindow::spawnObjects()
 
 void MainWindow::moveObjects()
 {
-    for (auto item : scene->items()) {
-        if (auto *obj = dynamic_cast<QGraphicsPixmapItem*>(item)) {
+    auto items = scene->items();
+    for (auto it = items.cbegin(); it != items.cend(); ++it) {
+        if (auto *obj = dynamic_cast<QGraphicsPixmapItem*>(*it)) {
             obj->advance(1);
         }
     }
@@ -106,32 +138,48 @@ void MainWindow::moveObjects()
 
 void MainWindow::checkCollisions()
 {
-    QList<QGraphicsItem*> items = scene->items();
-    for (auto item1 : items) {
-        for (auto item2 : items) {
-            if (item1 == item2) continue;
+    const auto items = scene->items();
+    QList<QGraphicsItem*> itemsToRemove;
 
-            if (item1->collidesWithItem(item2)) {
-                // Implement collision resolution according to the rules
-                // Example for scissors and paper:
-                if (dynamic_cast<Tijera*>(item1) && dynamic_cast<Papel*>(item2)) {
-                    scene->removeItem(item2);
-                    delete item2;
-                    paperCount--;
-                    scissorsCount++; // Increment score for scissors
-                } else if (dynamic_cast<Papel*>(item1) && dynamic_cast<Piedra*>(item2)) {
-                    scene->removeItem(item2);
-                    delete item2;
-                    rockCount--;
-                    paperCount++; // Increment score for paper
-                } else if (dynamic_cast<Piedra*>(item1) && dynamic_cast<Tijera*>(item2)) {
-                    scene->removeItem(item2);
-                    delete item2;
-                    scissorsCount--;
-                    rockCount++; // Increment score for rock
+    for (auto it1 = items.cbegin(); it1 != items.cend(); ++it1) {
+        for (auto it2 = items.cbegin(); it2 != items.cend(); ++it2) {
+            if (*it1 == *it2 || itemsToRemove.contains(*it1) || itemsToRemove.contains(*it2)) continue;
+
+            if ((*it1)->collidesWithItem(*it2)) {
+                if (auto *scissors = dynamic_cast<Tijera*>(*it1)) {
+                    if (auto *paper = dynamic_cast<Papel*>(*it2)) {
+                        itemsToRemove.append(paper);
+                        paperCount--;
+                        scissorsCount++;
+                        ui->scissorsScoreLabel->setText(QString::number(scissorsCount));
+                    } else if (auto *rock = dynamic_cast<Piedra*>(*it2)) {
+                        itemsToRemove.append(scissors);
+                        scissorsCount--;
+                        rockCount++;
+                        ui->rockScoreLabel->setText(QString::number(rockCount));
+                    }
+                } else if (auto *paper = dynamic_cast<Papel*>(*it1)) {
+                    if (auto *rock = dynamic_cast<Piedra*>(*it2)) {
+                        itemsToRemove.append(rock);
+                        rockCount--;
+                        paperCount++;
+                        ui->paperScoreLabel->setText(QString::number(paperCount));
+                    }
+                } else if (auto *rock = dynamic_cast<Piedra*>(*it1)) {
+                    if (auto *scissors = dynamic_cast<Tijera*>(*it2)) {
+                        itemsToRemove.append(scissors);
+                        scissorsCount--;
+                        rockCount++;
+                        ui->rockScoreLabel->setText(QString::number(rockCount));
+                    }
                 }
             }
         }
+    }
+
+    for (auto item : itemsToRemove) {
+        scene->removeItem(item);
+        delete item;
     }
 }
 
@@ -170,7 +218,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         playerIndicator->setPos(playerIndicator->x() + step, playerIndicator->y());
         break;
     case Qt::Key_Space:
-        // Check for collision with player indicator and remove the item
         for (auto item : scene->items(playerIndicator->pos())) {
             if (item != playerIndicator) {
                 scene->removeItem(item);
@@ -183,5 +230,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break;
     default:
         QMainWindow::keyPressEvent(event);
+
     }
 }
+
+
