@@ -1,10 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QTimer>
 #include <QKeyEvent>
+#include "jugador.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -44,7 +44,7 @@ private:
     int playerScore;
     int timeRemaining;
     bool isPlayerActive;
-    QGraphicsPixmapItem *playerIndicator;
+    Jugador *playerIndicator;
 };
 
 #endif // MAINWINDOW_H
